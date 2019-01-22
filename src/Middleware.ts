@@ -1,12 +1,12 @@
-import {ResourceLoader} from "./ResourceLoader";
+import {ResourceConfig, ResourceLoader} from "./ResourceLoader";
 import {Resource} from "./Resource";
 import * as EventEmitter from "eventemitter3";
 import {EmitSignal} from "./EmitSignal";
 
 export interface Middleware<T> {
     _loader?: ResourceLoader;
-    readonly onLoad?:EmitSignal<(...data:T[])=>void>;
-    add(key:string, ...args:any):Middleware<T>;
+    onLoad?:EmitSignal<(...data:T[])=>void>;
+    add(key:string, ...args:any[]):Middleware<T>;
     transform?(...resources:Resource<any>[]):T|T[];
 }
 
@@ -27,12 +27,13 @@ const MIDDLEWARE_PROTOTYPE = {
 
 export class Middleware<T> implements Middleware<T> {
 
-    private readonly _emitter:EventEmitter = new EventEmitter();
-    readonly onLoad?:EmitSignal<(...data:T[])=>void> = new EmitSignal(this._emitter,MIDDLEWARE_EVENTS.LOAD_COMPLETE);
+    private readonly _emitter:EventEmitter;
+    onLoad?:EmitSignal<(...data:T[])=>void>;
     _loader?: ResourceLoader;
 
     constructor() {
         this._emitter = new EventEmitter();
+        this.onLoad = new EmitSignal(this._emitter,MIDDLEWARE_EVENTS.LOAD_COMPLETE);
     }
 
     static inject<T>(middleware:Middleware<T>) {
@@ -55,17 +56,25 @@ export class Middleware<T> implements Middleware<T> {
     }
 
     add(key: string, ...args): Middleware<T> {
-        this._loader.addResourceToQueue({
+        this.addResourceToQueue({
             resources: [{
                 resource: new Resource<any>(),
                 args: [...args]
-            }],
-            onAllResourcesLoaded: this.queueCallback
+            }]
         });
         return this;
     }
 
-    queueCallback?(...resources:Resource<any>[]) {
+    addResourceToQueue(config: ResourceConfig): Middleware<T> {
+        this._loader.addResourceToQueue({
+            resources: config.resources,
+            onResourcesLoaded: this.queueCallback,
+            onResourcesLoadedContext: this
+        });
+        return this;
+    }
+
+    queueCallback(...resources:Resource<any>[]) {
         const data = this.transform(...resources);
 
         if(Array.isArray(data)) {

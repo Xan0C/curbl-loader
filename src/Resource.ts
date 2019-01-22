@@ -29,12 +29,12 @@ export interface Resource<T> {
     loadImage?(options:ImageOptions, ...args):HTMLImageElement;
     load?(options: ResourceOptions|string, ...args):Resource<T>;
     transform?(cb:(requestObject:RequestObject, ...args) => T):Resource<T>;
-    readonly onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
-    readonly onLoadStart?:EmitSignal<(event:Event, request:RequestObject, ...args)=>void>;
-    readonly onLoadFinished?:EmitSignal<(resource:Resource<T>)=>void>;
-    readonly onError?:EmitSignal<(event:Event, request:RequestObject)=>void>;
-    readonly onAbort?:EmitSignal<(event:Event, request:RequestObject)=>void>;
-    readonly onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
+    onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
+    onLoadStart?:EmitSignal<(event:Event, request:RequestObject, ...args)=>void>;
+    onLoadFinished?:EmitSignal<(resource:Resource<T>)=>void>;
+    onError?:EmitSignal<(event:Event, request:RequestObject)=>void>;
+    onAbort?:EmitSignal<(event:Event, request:RequestObject)=>void>;
+    onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
 }
 
 export enum RESOURCE_EVENT {
@@ -57,16 +57,28 @@ function _noopTransform(request:RequestObject):any {
 
 export class Resource<T> implements Resource<T> {
 
-    private transformCallback: (requestObject:RequestObject, ...args) => T = _noopTransform;
-    private readonly _emitter:EventEmitter = new EventEmitter();
-    readonly onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void> = new EmitSignal(this._emitter,RESOURCE_EVENT.PROGRESS);
-    readonly onLoadStart?:EmitSignal<(event:Event, request:RequestObject, ...args)=>void> = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_START);
-    readonly onLoadFinished?:EmitSignal<(resource:Resource<T>)=>void> = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_COMPLETE);
-    readonly onError?:EmitSignal<(event:Event, request:RequestObject)=>void> = new EmitSignal(this._emitter,RESOURCE_EVENT.ERROR);
-    readonly onAbort?:EmitSignal<(event:Event, request:RequestObject)=>void> = new EmitSignal(this._emitter,RESOURCE_EVENT.ABORT);
-    readonly onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void> = new EmitSignal(this._emitter,RESOURCE_EVENT.TIMEOUT);
+    private transformCallback: (requestObject:RequestObject, ...args) => T;
+    private _emitter:EventEmitter;
 
-    data?: T;
+    onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
+    onLoadStart?:EmitSignal<(event:Event, request:RequestObject, ...args)=>void>;
+    onLoadFinished?:EmitSignal<(resource:Resource<T>)=>void>;
+    onError?:EmitSignal<(event:Event, request:RequestObject)=>void>;
+    onAbort?:EmitSignal<(event:Event, request:RequestObject)=>void>;
+    onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
+
+    public data?: T;
+
+    constructor() {
+        this.transformCallback = _noopTransform;
+        this._emitter = new EventEmitter();
+        this.onProgress = new EmitSignal(this._emitter,RESOURCE_EVENT.PROGRESS);
+        this.onLoadStart = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_START);
+        this.onLoadFinished = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_COMPLETE);
+        this.onError = new EmitSignal(this._emitter,RESOURCE_EVENT.ERROR);
+        this.onAbort = new EmitSignal(this._emitter,RESOURCE_EVENT.ABORT);
+        this.onTimeout = new EmitSignal(this._emitter,RESOURCE_EVENT.TIMEOUT);
+    }
 
     /**
      * Create a XMLHttpRequest and start loading the Resource

@@ -4,13 +4,16 @@ import {AsyncWorkerQueue} from "./AsyncWorkerQueue";
 import {EmitSignal} from "./EmitSignal";
 import * as EventEmitter from "eventemitter3";
 
-export type LoadConfig = {
+export type ResourceConfig = {
     resources: {
         resource: Resource<any>,
         args?: any[]
     }[],
-    onResourceLoaded?: (resource:Resource<any>) => void;
-    onAllResourcesLoaded?: (...resources:Resource<any>[]) => void;
+};
+
+export type LoadConfig = ResourceConfig & {
+    onResourcesLoaded?: (...resources:Resource<any>[]) => void;
+    onResourcesLoadedContext?: any;
 };
 
 export enum LOADER_EVENTS {
@@ -25,39 +28,47 @@ export enum LOADER_EVENTS {
 export class ResourceLoader {
 
     private resourceQueue: AsyncWorkerQueue;
-    private _emitter: EventEmitter;
     private middleware:{[id:string]:Middleware<any>};
+
+    private readonly _emitter: EventEmitter;
 
     /**
      * Called for each Resource before starting to load the resource
      */
-    private readonly _preSignal: EmitSignal<(resource:Resource<any>)=>void> = new EmitSignal(this._emitter, LOADER_EVENTS.PRE);
+    private readonly _preSignal: EmitSignal<(resource:Resource<any>)=>void>;
 
     /**
      * Called for each Resource after finished loading the resource and transforming it through the middleware
      */
-    private readonly _afterSignal:EmitSignal<(...data)=>void> = new EmitSignal(this._emitter, LOADER_EVENTS.AFTER);
+    private readonly _afterSignal:EmitSignal<(...data)=>void>;
 
     /**
      * Progress event for each resource
      */
-    readonly onProgress:EmitSignal<(event:ProgressEvent)=>void> = new EmitSignal(this._emitter,LOADER_EVENTS.PROGRESS);
+    readonly onProgress:EmitSignal<(event:ProgressEvent)=>void>;
     /**
      * Called once for each Resource when it starts loading
      */
-    readonly onLoadStart:EmitSignal<(resource:Resource<any>)=>void> = new EmitSignal(this._emitter,LOADER_EVENTS.LOAD_START);
+    readonly onLoadStart:EmitSignal<(resource:Resource<any>)=>void>;
     /**
      * Called for each Resource if an error happens during loading the resource
      */
-    readonly onError:EmitSignal<(event:Event)=>void> = new EmitSignal(this._emitter,LOADER_EVENTS.ERROR);
+    readonly onError:EmitSignal<(event:Event)=>void>;
     /**
      * Called once after load if all the resources and Middlewares have finished loading all resources
      */
-    readonly onComplete:EmitSignal< () => void> = new EmitSignal(this._emitter,LOADER_EVENTS.LOAD_COMPLETE);
+    readonly onComplete:EmitSignal< () => void>;
 
-    constructor(concurrency:number=8) {
+    constructor(concurrency:number=10) {
         this._emitter = new EventEmitter();
+        this.middleware = Object.create(null);
         this.resourceQueue = new AsyncWorkerQueue(concurrency);
+        this._preSignal = new EmitSignal(this._emitter, LOADER_EVENTS.PRE);
+        this._afterSignal = new EmitSignal(this._emitter, LOADER_EVENTS.AFTER);
+        this.onProgress = new EmitSignal(this._emitter,LOADER_EVENTS.PROGRESS);
+        this.onLoadStart = new EmitSignal(this._emitter,LOADER_EVENTS.LOAD_START);
+        this.onError = new EmitSignal(this._emitter,LOADER_EVENTS.ERROR);
+        this.onComplete = new EmitSignal(this._emitter,LOADER_EVENTS.LOAD_COMPLETE);
     }
 
     private _callAfter(data) {
@@ -123,31 +134,39 @@ export class ResourceLoader {
                 return {
                     resource: value.resource,
                     process: value.resource.load,
+                    processContext: value.resource,
                     listener: value.resource.onLoadFinished.once,
+                    listenerContext: value.resource.onLoadFinished,
                     args: value.args
                 };
             }),
-            onWorkFinished: config.onAllResourcesLoaded,
-            onTaskComplete: config.onResourceLoaded
+            onWorkFinished: config.onResourcesLoaded,
+            onWorkFinishedContext: config.onResourcesLoadedContext
         });
         return this;
     }
 
     pre<T>(cb: (resource: Resource<T>) => void):ResourceLoader {
-        this._preSignal.once(cb);
+        this._preSignal.on(cb);
         return this;
     }
 
     after(cb: (...data) => void):ResourceLoader {
-        this._afterSignal.once(cb);
+        this._afterSignal.on(cb);
         return this;
+    }
+
+    _onLoadComplete() {
+        this._preSignal.removeAllListeners();
+        this._afterSignal.removeAllListeners();
+        this.onComplete.emit();
     }
 
     load(finishCb?:()=>void):ResourceLoader {
         if(finishCb && typeof finishCb === 'function') {
             this.onComplete.once(finishCb);
         }
-        this.resourceQueue.process(()=>this.onComplete.emit());
+        this.resourceQueue.process(()=>this._onLoadComplete());
         return this;
     }
 }

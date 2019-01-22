@@ -4,3 +4,5 @@
 /lib
 /dist
 npm-debug.log
+/coverage
+/test/**/*.js

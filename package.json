@@ -6,7 +6,11 @@
   "types": "./lib/index.d.ts",
   "typings": "./lib/index.d.ts",
   "scripts": {
-    "tsc": "tsc"
+    "build": "tsc",
+    "build-all": "yarn run build & yarn run build-test",
+    "build-test": "tsc -p ./test & webpack ./test/index.ts -o ./dist/test.bundle.js --display-error-details",
+    "pretest": "npm run build-test",
+    "test": ""
   },
   "repository": "git@github.com:Xan0C/curbl-loader.git",
   "author": "Soeren <soeren.vu@gmail.com>",
@@ -15,7 +19,14 @@
     "eventemitter3": "^3.1.0"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.7",
     "@types/eventemitter3": "^2.0.2",
-    "typescript": "^3.2.2"
+    "@types/mocha": "^5.2.5",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.2.2",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1"
   }
 }

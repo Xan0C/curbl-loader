@@ -6,3 +6,5 @@ index.html
 .idea/
 webpack.config.js
 /dist
+/coverage
+/test/**/*.js

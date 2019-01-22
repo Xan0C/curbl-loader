@@ -2,7 +2,9 @@ export type Task<T> = {
     worker?: Worker;
     resource?: T;
     process: (...args) => void;
+    processContext?: any;
     listener: (cb: () => void) => void;
+    listenerContext?: any;
     args?: any[];
     completed?: boolean;
 }
@@ -10,8 +12,8 @@ export type Task<T> = {
 export type Worker = {
     tasks: Task<any>[];
     count?:number;
+    onWorkFinishedContext?: any;
     onWorkFinished?: (...resource) => void;
-    onTaskComplete?: (resource) => void;
 }
 
 function _noop() {}
@@ -27,26 +29,20 @@ export class AsyncWorkerQueue {
     constructor(concurrency:number) {
         this.concurrency = concurrency;
         this.paused = false;
+        this.processes = 0;
         this.workers = [];
         this.tasks = [];
     }
 
-    once<T>(object,fnName:string): () => void {
-        return (...args) => {
-            const cbFn = object[fnName] || _noop;
-            object[fnName] = _noop;
-            cbFn(...args);
-        }
-    }
-
     process(finishCb?: () => void) {
         this.finishCb = finishCb || _noop;
-        while(this.paused && this.processes < this.concurrency && this.tasks.length) {
+
+        while(!this.paused && this.processes < this.concurrency && this.tasks.length) {
             const task = this.tasks.shift();
             this.processes++;
 
-            task.listener(() => this.next(task));
-            task.process(...task.args);
+            task.listener.apply(task.listenerContext, [() => this.next(task)]);
+            task.process.apply(task.processContext, task.args);
         }
     }
 
@@ -55,19 +51,14 @@ export class AsyncWorkerQueue {
             throw "Worker needs to have at least one task";
         }
 
-        this.workers.push({
-            tasks: worker.tasks,
-            count:0,
-            onWorkFinished: this.once(worker,'onWorkFinished'),
-            onTaskComplete: worker.onTaskComplete || _noop
-        });
+        worker.count = worker.count || 0;
+        worker.onWorkFinished = worker.onWorkFinished || _noop;
+        this.workers.push(worker);
 
         for(let i=0, task:Task<any>; task = worker.tasks[i]; i++) {
-            this.tasks.push({
-                ...task,
-                worker: worker,
-                completed: false
-            });
+            task.worker = worker;
+            task.completed = task.completed || false;
+            this.tasks.push(task);
         }
     }
 
@@ -96,6 +87,8 @@ export class AsyncWorkerQueue {
         task.completed = true;
         //Check if all tasks of the Worker have been completed
         this.workerFinished(task.worker);
+        this.onQueueFinished();
+        this.process(this.finishCb);
     }
 
     /**
@@ -104,14 +97,18 @@ export class AsyncWorkerQueue {
      * @param worker
      */
     private workerFinished(worker:Worker) {
-        worker.count++;
+        worker.count += 1;
         const index = this.workers.indexOf(worker);
         if(worker.count === worker.tasks.length && index != -1) {
             const resources = worker.tasks.map((task)=>task.resource);
-            worker.onWorkFinished(...resources);
+            worker.onWorkFinished.apply(worker.onWorkFinishedContext,resources);
             this.workers.splice(index,1);
         }
+    }
+
+    private onQueueFinished() {
         if(this.idle()) {
+            console.log("Calling finish cb of async queue ",this);
             this.finishCb();
         }
     }
