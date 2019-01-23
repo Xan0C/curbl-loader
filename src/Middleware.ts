@@ -6,7 +6,7 @@ import {EmitSignal} from "./EmitSignal";
 export interface Middleware<T> {
     _loader?: ResourceLoader;
     onLoad?:EmitSignal<(...data:T[])=>void>;
-    add(key:string, ...args:any[]):Middleware<T>;
+    add(...args:any[]):Middleware<T>;
     transform?(...resources:Resource<any>[]):T|T[];
 }
 
@@ -55,7 +55,7 @@ export class Middleware<T> implements Middleware<T> {
         }
     }
 
-    add(key: string, ...args): Middleware<T> {
+    add(...args): Middleware<T> {
         this.addResourceToQueue({
             resources: [{
                 resource: new Resource<any>(),
@@ -66,7 +66,7 @@ export class Middleware<T> implements Middleware<T> {
     }
 
     addResourceToQueue(config: ResourceConfig): Middleware<T> {
-        this._loader.addResourceToQueue({
+        this._loader._addResourceToQueue({
             resources: config.resources,
             onResourcesLoaded: this.queueCallback,
             onResourcesLoadedContext: this
@@ -91,6 +91,6 @@ export class Middleware<T> implements Middleware<T> {
      * @param resources {Resource[]} - the resources that have finished loading
      */
     transform?(...resources:Resource<any>[]):T|T[] {
-        return resources.map(resource => resource.data);
+        return resources.map(resource => resource.request);
     }
 }

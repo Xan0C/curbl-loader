@@ -12,6 +12,7 @@ export type ResourceConfig = {
 };
 
 export type LoadConfig = ResourceConfig & {
+    key?: string;
     onResourcesLoaded?: (...resources:Resource<any>[]) => void;
     onResourcesLoadedContext?: any;
 };
@@ -71,8 +72,8 @@ export class ResourceLoader {
         this.onComplete = new EmitSignal(this._emitter,LOADER_EVENTS.LOAD_COMPLETE);
     }
 
-    private _callAfter(data) {
-        this._afterSignal.emit(data);
+    private _callAfter(...data) {
+        this._afterSignal.emit(...data);
     }
 
     /**
@@ -119,7 +120,7 @@ export class ResourceLoader {
         return undefined;
     }
 
-    addResourceToQueue(config: LoadConfig):ResourceLoader {
+    _addResourceToQueue(config: LoadConfig):ResourceLoader {
         config.resources.forEach(value => {
             value.resource.onProgress.on((event) => this.onProgress.emit(event));
             value.resource.onError.on((event) => this.onError.emit(event));
@@ -146,7 +147,7 @@ export class ResourceLoader {
         return this;
     }
 
-    pre<T>(cb: (resource: Resource<T>) => void):ResourceLoader {
+    pre(cb: (resource: Resource<HTMLImageElement>) => void):ResourceLoader {
         this._preSignal.on(cb);
         return this;
     }

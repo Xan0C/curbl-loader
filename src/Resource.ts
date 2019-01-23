@@ -23,12 +23,13 @@ export type ResourceOptions = {
     responseType?: XhrResponseType;
 } & ImageOptions & XhrOptions;
 
-export interface Resource<T> {
-    data?:T;
+export type RequestType = HTMLImageElement | XMLHttpRequest;
+
+export interface Resource<T extends RequestType = XMLHttpRequest> {
+    request?:T;
     loadXhr?(options:XhrOptions, ...args):XMLHttpRequest;
     loadImage?(options:ImageOptions, ...args):HTMLImageElement;
     load?(options: ResourceOptions|string, ...args):Resource<T>;
-    transform?(cb:(requestObject:RequestObject, ...args) => T):Resource<T>;
     onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
     onLoadStart?:EmitSignal<(event:Event, request:RequestObject, ...args)=>void>;
     onLoadFinished?:EmitSignal<(resource:Resource<T>)=>void>;
@@ -51,13 +52,8 @@ export enum LOAD_TYPE {
     IMAGE = 'image'
 }
 
-function _noopTransform(request:RequestObject):any {
-    return request;
-}
+export class Resource<T extends RequestType> implements Resource<T> {
 
-export class Resource<T> implements Resource<T> {
-
-    private transformCallback: (requestObject:RequestObject, ...args) => T;
     private _emitter:EventEmitter;
 
     onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
@@ -67,10 +63,9 @@ export class Resource<T> implements Resource<T> {
     onAbort?:EmitSignal<(event:Event, request:RequestObject)=>void>;
     onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
 
-    public data?: T;
+    public request?: T;
 
     constructor() {
-        this.transformCallback = _noopTransform;
         this._emitter = new EventEmitter();
         this.onProgress = new EmitSignal(this._emitter,RESOURCE_EVENT.PROGRESS);
         this.onLoadStart = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_START);
@@ -92,7 +87,7 @@ export class Resource<T> implements Resource<T> {
         request.open('GET', options.url, options.async === undefined ? true : !!options.async);
         request.addEventListener('progress', (event:ProgressEvent) => this.onProgress.emit(event, request), {once: true});
         request.addEventListener('loadstart', (event:Event) => this.onLoadStart.emit(event, request, ...args), {once: true});
-        request.addEventListener('load', (event:Event) => this.finished(event, request, ...args), {once: true});
+        request.addEventListener('load', (event:Event) => this.onLoadFinished.emit(this), {once: true});
         request.addEventListener('error', (event:ErrorEvent) => this.onError.emit(event, request), {once: true});
         request.addEventListener('abort', (event:Event) => this.onAbort.emit(event, request), {once: true});
         request.addEventListener('timeout', (event:ProgressEvent) => this.onTimeout.emit(event, request), {once: true});
@@ -114,16 +109,11 @@ export class Resource<T> implements Resource<T> {
         }
         image.addEventListener('progress', (event:ProgressEvent) => this.onProgress.emit(event, image), {once: true});
         image.addEventListener('loadstart', (event:Event) => this.onLoadStart.emit(event, image, ...args), {once: true});
-        image.addEventListener('load', (event:Event) => this.finished(event, image, ...args), {once: true});
+        image.addEventListener('load', (event:Event) => this.onLoadFinished.emit(this), {once: true});
         image.addEventListener('error', (event:ErrorEvent) => this.onError.emit(event, image), {once: true});
         image.addEventListener('abort', (event:Event) => this.onAbort.emit(event, image), {once: true});
         image.src = options.url;
         return image;
-    }
-
-    private finished(event:Event, request:RequestObject, ...args) {
-        this.data = this.transformCallback(request, ...args);
-        this.onLoadFinished.emit(this);
     }
 
     /**
@@ -152,22 +142,12 @@ export class Resource<T> implements Resource<T> {
 
         switch (loadOptions.loadType) {
             case LOAD_TYPE.IMAGE:
-                this.loadImage(loadOptions,...args);
+                this.request = this.loadImage(loadOptions,...args) as T;
                 return this;
             case LOAD_TYPE.XHR:
-                this.loadXhr(loadOptions, ...args);
+                this.request = this.loadXhr(loadOptions, ...args) as T;
                 return this;
         }
-        return this;
-    }
-
-    /**
-     * Set a cb function after the resource has finished loading to modify the Resource
-     * e.g parsing an Image to a GLTexture etc.
-     * @param cb {Function} - (request:RequestObject, ...args) => T, where args are the optional arguments passed to the load function
-     */
-    transform?(cb:(request:RequestObject,...args) => T):Resource<T> {
-        this.transformCallback = cb;
         return this;
     }
 }
