@@ -108,7 +108,6 @@ export class AsyncWorkerQueue {
 
     private onQueueFinished() {
         if(this.idle()) {
-            console.log("Calling finish cb of async queue ",this);
             this.finishCb();
         }
     }

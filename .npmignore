@@ -8,3 +8,5 @@ webpack.config.js
 /dist
 /coverage
 /test/**/*.js
+/test
+yarn.error.log

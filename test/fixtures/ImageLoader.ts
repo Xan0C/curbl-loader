@@ -1,17 +1,15 @@
-import {LOAD_TYPE, Middleware, Resource, ResourceLoader} from "../../lib";
+import {LOAD_TYPE, Middleware, Resource} from "../../lib";
 
 export class ImageLoader extends Middleware<{width:number,height:number}> {
-    _loader: ResourceLoader;
 
-    add(url: string, width?:number, height?: number): Middleware<{width:number,height:number}> {
+    add(url: string): Middleware<{width:number,height:number}> {
         this.addResourceToQueue({
+            key: url,
             resources: [{
                 resource: new Resource<HTMLImageElement>(),
                 args: [{
                     url: url,
-                    loadType: LOAD_TYPE.IMAGE,
-                    width: width,
-                    height: height
+                    loadType: LOAD_TYPE.IMAGE
                 }]
             }]
         });

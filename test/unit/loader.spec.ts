@@ -1,6 +1,6 @@
-import {ResourceLoader} from "../../lib";
+import {MiddlewareData, ResourceLoader} from "../../lib";
 import {expect} from "chai";
-import {ImageLoader} from "../fixture/ImageLoader";
+import {ImageLoader} from "../fixtures/ImageLoader";
 
 describe("ResourceLoader", () => {
     let loader:ResourceLoader;
@@ -8,7 +8,6 @@ describe("ResourceLoader", () => {
     beforeEach(async ()=>{
         loader = new ResourceLoader();
         loader.addMiddleware(new ImageLoader, ImageLoader);
-
     });
 
     afterEach(async () => {
@@ -17,8 +16,9 @@ describe("ResourceLoader", () => {
 
     it("#Load Image", (done) => {
         loader.get(ImageLoader).add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727341.jpg");
-        loader.load().after((img: HTMLImageElement) => {
-           expect(img).to.not.eq(undefined, "img should have been loaded");
+        loader.load().after((img: MiddlewareData<HTMLImageElement>) => {
+           expect(img.data).to.not.eq(undefined, "img should have been loaded");
+           expect(img.key).to.eq("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727341.jpg", "img key should be url");
            done();
         });
     }).timeout(10000);
@@ -40,13 +40,12 @@ describe("ResourceLoader", () => {
         imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-698246.jpg");
 
         let count = 0;
-        loader.load().after((img: HTMLImageElement) => {
-            console.log("Image src: ", img.src);
+        loader.load().after((img: MiddlewareData<HTMLImageElement>) => {
             count++;
             if(count === 12) {
-                expect(img).to.not.eq(undefined, "img should have been loaded");
+                expect(img.data).to.not.eq(undefined, "img should have been loaded");
                 done();
             }
         });
-    }).timeout(10000);
+    }).timeout(20000);
 });

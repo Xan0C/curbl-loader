@@ -3,53 +3,63 @@ import {Resource} from "./Resource";
 import * as EventEmitter from "eventemitter3";
 import {EmitSignal} from "./EmitSignal";
 
+export type MiddlewareData<T> = {
+    key?: string;
+    type?: number|string;
+    data?: T|T[]
+};
+
 export interface Middleware<T> {
+    type?: string|number;
     _loader?: ResourceLoader;
-    onLoad?:EmitSignal<(...data:T[])=>void>;
+    onLoad?:EmitSignal<(data:MiddlewareData<T>)=>void>;
     add(...args:any[]):Middleware<T>;
     transform?(...resources:Resource<any>[]):T|T[];
 }
 
-export enum MIDDLEWARE_EVENTS {
+export enum RESOURCE_LOADER_EVENTS {
     LOAD_COMPLETE = "LOAD_COMPLETE"
 }
 
-const MIDDLEWARE_PROPERTIES = {
+const RESOURCE_LOADER_PROPERTIES = {
     _emitter: () => new EventEmitter(),
-    onLoad: () => new EmitSignal(this._emitter,MIDDLEWARE_EVENTS.LOAD_COMPLETE),
+    onLoad: () => new EmitSignal(this._emitter,RESOURCE_LOADER_EVENTS.LOAD_COMPLETE),
 };
 
-const MIDDLEWARE_PROTOTYPE = {
+const RESOURCE_LOADER_PROTOTYPE = {
     transform: () => Middleware.prototype.transform,
     add: () => Middleware.prototype.add,
-    queueCallback: () => Middleware.prototype.queueCallback
+    addResourceToQueue: () => Middleware.prototype.addResourceToQueue,
+    _queueCallback: () => Middleware.prototype._queueCallback
 };
 
 export class Middleware<T> implements Middleware<T> {
 
     private readonly _emitter:EventEmitter;
-    onLoad?:EmitSignal<(...data:T[])=>void>;
+    onLoad?:EmitSignal<(data:MiddlewareData<T>)=>void>;
     _loader?: ResourceLoader;
+    type?: string|number;
 
-    constructor() {
+    constructor(type?:string|number) {
         this._emitter = new EventEmitter();
-        this.onLoad = new EmitSignal(this._emitter,MIDDLEWARE_EVENTS.LOAD_COMPLETE);
+        this.onLoad = new EmitSignal(this._emitter,RESOURCE_LOADER_EVENTS.LOAD_COMPLETE);
+        this.type = type;
     }
 
     static inject<T>(middleware:Middleware<T>) {
-        for(let propKey in MIDDLEWARE_PROPERTIES){
+        for(let propKey in RESOURCE_LOADER_PROPERTIES){
             if(middleware[propKey] === undefined || middleware[propKey] === null){
-                middleware[propKey] = MIDDLEWARE_PROPERTIES[propKey]();
+                middleware[propKey] = RESOURCE_LOADER_PROPERTIES[propKey]();
             }
         }
-        for(let protoKey in MIDDLEWARE_PROTOTYPE){
+        for(let protoKey in RESOURCE_LOADER_PROTOTYPE){
             if(middleware.constructor && middleware.constructor.prototype){
                 if(middleware.constructor.prototype[protoKey] === undefined || middleware.constructor.prototype[protoKey] === null){
-                    middleware.constructor.prototype[protoKey] = MIDDLEWARE_PROTOTYPE[protoKey]();
+                    middleware.constructor.prototype[protoKey] = RESOURCE_LOADER_PROTOTYPE[protoKey]();
                 }
             }else{
                 if(middleware[protoKey] === undefined || middleware[protoKey] === null){
-                    middleware[protoKey] = MIDDLEWARE_PROTOTYPE[protoKey]();
+                    middleware[protoKey] = RESOURCE_LOADER_PROTOTYPE[protoKey]();
                 }
             }
         }
@@ -68,20 +78,15 @@ export class Middleware<T> implements Middleware<T> {
     addResourceToQueue(config: ResourceConfig): Middleware<T> {
         this._loader._addResourceToQueue({
             resources: config.resources,
-            onResourcesLoaded: this.queueCallback,
+            onResourcesLoaded: (...resources)=>this._queueCallback(config.key,this.type,...resources),
             onResourcesLoadedContext: this
         });
         return this;
     }
 
-    queueCallback(...resources:Resource<any>[]) {
+    _queueCallback(key:string, type:string|number, ...resources:Resource<any>[]) {
         const data = this.transform(...resources);
-
-        if(Array.isArray(data)) {
-            this.onLoad.emit(...data);
-        }else {
-            this.onLoad.emit(data);
-        }
+        this.onLoad.emit({key: key, type:type, data: data});
     }
 
     /**
