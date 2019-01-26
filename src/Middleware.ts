@@ -65,10 +65,10 @@ export class Middleware<T> implements Middleware<T> {
         }
     }
 
-    add(...args): Middleware<T> {
+    add(url:string,...args): Middleware<T> {
         this.addResourceToQueue({
             resources: [{
-                resource: new Resource<any>(),
+                resource: new Resource<any>(url),
                 args: [...args]
             }]
         });

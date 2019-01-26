@@ -6,11 +6,10 @@ export class ImageLoader extends Middleware<{width:number,height:number}> {
         this.addResourceToQueue({
             key: url,
             resources: [{
-                resource: new Resource<HTMLImageElement>(),
-                args: [{
+                resource: new Resource<HTMLImageElement>({
                     url: url,
                     loadType: LOAD_TYPE.IMAGE
-                }]
+                })
             }]
         });
         return this;

@@ -26,6 +26,8 @@ export type ResourceOptions = {
 export type RequestType = HTMLImageElement | XMLHttpRequest;
 
 export interface Resource<T extends RequestType = XMLHttpRequest> {
+    options: ResourceOptions;
+    config: {[key:string]:any};
     request?:T;
     loadXhr?(options:XhrOptions, ...args):XMLHttpRequest;
     loadImage?(options:ImageOptions, ...args):HTMLImageElement;
@@ -64,10 +66,26 @@ export class Resource<T extends RequestType> implements Resource<T> {
     onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
 
     public request?: T;
-    public config?: {[key:string]:any};
+    public options: ResourceOptions;
+    public config: {[key:string]:any};
 
-    constructor(config?:{[key:string]:any}) {
-        this.config = config;
+    constructor(options:ResourceOptions|string,config?:{[key:string]:any}) {
+        this.config = config || Object.create(null);
+        if(typeof options === 'string') {
+            this.options = {
+                url: options,
+                loadType: LOAD_TYPE.XHR,
+                responseType: ''
+            };
+        } else {
+            this.options = {
+                ...options,
+                url: options.url,
+                loadType: options.loadType || LOAD_TYPE.XHR,
+                responseType: options.responseType || ''
+            };
+        }
+
         this._emitter = new EventEmitter();
         this.onProgress = new EmitSignal(this._emitter,RESOURCE_EVENT.PROGRESS);
         this.onLoadStart = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_START);
@@ -124,30 +142,13 @@ export class Resource<T extends RequestType> implements Resource<T> {
      * @param args
      * @returns {LoadComponent}
      */
-    load?(options: ResourceOptions|string, ...args):Resource<T> {
-        let loadOptions = options;
-
-        if(typeof options === 'string') {
-            loadOptions = {
-                url: options,
-                loadType: LOAD_TYPE.XHR,
-                responseType: ''
-            };
-        } else {
-            loadOptions = {
-                ...options,
-                url: options.url,
-                loadType: options.loadType || LOAD_TYPE.XHR,
-                responseType: options.responseType || ''
-            };
-        }
-
-        switch (loadOptions.loadType) {
+    load?(...args):Resource<T> {
+        switch (this.options.loadType) {
             case LOAD_TYPE.IMAGE:
-                this.request = this.loadImage(loadOptions,...args) as T;
+                this.request = this.loadImage(this.options,...args) as T;
                 return this;
             case LOAD_TYPE.XHR:
-                this.request = this.loadXhr(loadOptions, ...args) as T;
+                this.request = this.loadXhr(this.options, ...args) as T;
                 return this;
         }
         return this;
