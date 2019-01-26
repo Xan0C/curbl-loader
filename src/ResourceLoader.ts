@@ -83,6 +83,7 @@ export class ResourceLoader {
     }
 
     private _callAfter(data:MiddlewareData<any>) {
+        this.onLoadComplete.emit(data);
         this._afterSignal.emit(data);
     }
 
