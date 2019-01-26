@@ -1,6 +1,6 @@
 {
   "name": "curbl-loader",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "generic resource loader",
   "author": "Soeren <soeren.vu@gmail.com>",
   "main": "./lib/index.js",
@@ -10,8 +10,7 @@
     "build-test": "tsc -p ./test",
     "pretest": "npm run build",
     "test": "npm run test-dev -- --single-run",
-    "test-dev": "karma start test/karma.conf.js",
-    "prepublish": "npm run build"
+    "test-dev": "karma start test/karma.conf.js"
   },
   "repository": "git@github.com:Xan0C/curbl-loader.git",
   "license": "MIT",
