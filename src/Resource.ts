@@ -64,8 +64,10 @@ export class Resource<T extends RequestType> implements Resource<T> {
     onTimeout?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
 
     public request?: T;
+    public config?: {[key:string]:any};
 
-    constructor() {
+    constructor(config?:{[key:string]:any}) {
+        this.config = config;
         this._emitter = new EventEmitter();
         this.onProgress = new EmitSignal(this._emitter,RESOURCE_EVENT.PROGRESS);
         this.onLoadStart = new EmitSignal(this._emitter,RESOURCE_EVENT.LOAD_START);
