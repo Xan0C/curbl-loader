@@ -193,4 +193,16 @@ export class ResourceLoader {
         this.resourceQueue.process(()=>this._onLoadComplete());
         return this;
     }
+    
+    stop() {
+        this.resourceQueue.stop();
+    }
+
+    pause() {
+        this.resourceQueue.pause();
+    }
+
+    resume() {
+        this.resourceQueue.resume();
+    }
 }

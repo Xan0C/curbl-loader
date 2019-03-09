@@ -112,6 +112,17 @@ export class AsyncWorkerQueue {
         }
     }
 
+    /**
+     * Stop processing of further tasks and clear worker cb
+     * task already started will be processed to its end but no cb will be called
+     */
+    stop() {
+        this.finishCb =  _noop;
+        this.workers.length = 0;
+        this.tasks.length = 0;
+        this.processes = 0;
+    }
+
     pause():void {
         this.paused = true;
     }
