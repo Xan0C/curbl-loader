@@ -6,7 +6,7 @@ import {EmitSignal} from "./EmitSignal";
 export type MiddlewareData<T> = {
     key?: string;
     type?: number|string;
-    data?: T|T[]
+    data?: T | T[]
 };
 
 export interface Middleware<T> {

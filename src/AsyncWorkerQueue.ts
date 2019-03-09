@@ -37,7 +37,7 @@ export class AsyncWorkerQueue {
     process(finishCb?: () => void) {
         this.finishCb = finishCb || _noop;
 
-        while(!this.paused && this.processes < this.concurrency && this.tasks.length) {
+        while(!this.paused && this.processes < this.concurrency && this.length) {
             const task = this.tasks.shift();
             this.processes++;
 

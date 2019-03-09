@@ -19,6 +19,7 @@ describe("ResourceLoader", () => {
         loader.load().after((img: MiddlewareData<HTMLImageElement>) => {
            expect(img.data).to.not.eq(undefined, "img should have been loaded");
            expect(img.key).to.eq("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727341.jpg", "img key should be url");
+           expect((img.data as HTMLImageElement).crossOrigin, "anonymous");
            done();
         });
     }).timeout(10000);

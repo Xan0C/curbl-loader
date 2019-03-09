@@ -1,8 +1,8 @@
 import {LOAD_TYPE, Middleware, Resource} from "../../lib";
 
-export class ImageLoader extends Middleware<{width:number,height:number}> {
+export class ImageLoader extends Middleware<HTMLImageElement> {
 
-    add(url: string): Middleware<{width:number,height:number}> {
+    add(url: string): Middleware<HTMLImageElement> {
         this.addResourceToQueue({
             key: url,
             resources: [{
@@ -15,7 +15,7 @@ export class ImageLoader extends Middleware<{width:number,height:number}> {
         return this;
     }
 
-    transform(resource: Resource<HTMLImageElement>): {width:number,height:number} {
+    transform(resource: Resource<HTMLImageElement>): HTMLImageElement {
         return resource.request;
     }
 }

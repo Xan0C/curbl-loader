@@ -57,6 +57,7 @@ export enum LOAD_TYPE {
 export class Resource<T extends RequestType> implements Resource<T> {
 
     private _emitter:EventEmitter;
+    private static tempAnchor: HTMLAnchorElement;
 
     onProgress?:EmitSignal<(event:ProgressEvent, request:RequestObject)=>void>;
     onLoadStart?:EmitSignal<(event:Event, request:RequestObject, ...args)=>void>;
@@ -132,8 +133,44 @@ export class Resource<T extends RequestType> implements Resource<T> {
         image.addEventListener('load', (event:Event) => this.onLoadFinished.emit(this), {once: true});
         image.addEventListener('error', (event:ErrorEvent) => this.onError.emit(event, image), {once: true});
         image.addEventListener('abort', (event:Event) => this.onAbort.emit(event, image), {once: true});
+        image.crossOrigin = this._determineCrossOrigin(options.url);
         image.src = options.url;
         return image;
+    }
+
+    private _determineCrossOrigin(url:string) {
+        // data: and javascript: urls are considered same-origin
+        if (url.indexOf('data:') === 0) {
+            return '';
+        }
+
+        // A sandboxed iframe without the 'allow-same-origin' attribute will have a special
+        // origin designed not to match window.location.origin, and will always require
+        // crossOrigin requests regardless of whether the location matches.
+        if (window.origin !== window.location.origin) {
+            return 'anonymous';
+        }
+
+        // default is window.location
+        const loc = window.location;
+
+        if (!Resource.tempAnchor) {
+            Resource.tempAnchor = document.createElement('a');
+        }
+
+        // let the browser determine the full href for the url of this resource and then
+        // use the properties of the anchor element, cause fuck IE9
+        Resource.tempAnchor.href = url;
+
+        const samePort = (!Resource.tempAnchor.port && loc.port === '') || (Resource.tempAnchor.port === loc.port);
+        const protocol = Resource.tempAnchor.protocol ? `${Resource.tempAnchor.protocol}:` : '';
+
+        // if cross origin
+        if (Resource.tempAnchor.host !== loc.hostname || !samePort || protocol !== loc.protocol) {
+            return 'anonymous';
+        }
+
+        return '';
     }
 
     /**
