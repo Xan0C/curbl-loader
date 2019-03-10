@@ -190,4 +190,14 @@ export class Resource<T extends RequestType> implements Resource<T> {
         }
         return this;
     }
+
+    abort() {
+        if(this.request instanceof XMLHttpRequest) {
+            this.request.abort();
+        }else if(this.request instanceof HTMLImageElement) {
+            this.request.src = "";
+        }
+
+        return this;
+    }
 }

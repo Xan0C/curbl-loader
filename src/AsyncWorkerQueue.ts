@@ -1,6 +1,8 @@
+import {Resource} from "./Resource";
+
 export type Task<T> = {
     worker?: Worker;
-    resource?: T;
+    resource?: Resource;
     process: (...args) => void;
     processContext?: any;
     listener: (cb: () => void) => void;
@@ -112,12 +114,20 @@ export class AsyncWorkerQueue {
         }
     }
 
+    private abort() {
+        for(let i=0, worker:Worker; worker = this.workers[i]; i++) {
+            for (let j = 0, task: Task<any>; task = worker.tasks[j]; j++) {
+                task.resource.abort();
+            }
+        }
+    }
+
     /**
      * Stop processing of further tasks and clear worker cb
-     * task already started will be processed to its end but no cb will be called
      */
     stop() {
         this.finishCb =  _noop;
+        this.abort();
         this.workers.length = 0;
         this.tasks.length = 0;
         this.processes = 0;
