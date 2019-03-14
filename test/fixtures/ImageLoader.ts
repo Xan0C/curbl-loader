@@ -1,4 +1,4 @@
-import {LOAD_TYPE, Middleware, Resource} from "../../lib";
+import {LOAD_TYPE, Middleware, Resource} from "../../src";
 
 export class ImageLoader extends Middleware<HTMLImageElement> {
 

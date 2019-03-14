@@ -6,4 +6,6 @@
 npm-debug.log
 /coverage
 /test/**/*.js
+/dist
+/coverage
 yarm.error.log

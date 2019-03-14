@@ -1,19 +1,15 @@
 {
   "compilerOptions": {
-    "target": "es2015",
-    "module": "es2015",
+    "target": "es5",
+    "module": "commonjs",
+    "lib": ["ES2015", "dom"],
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": false,
-    "rootDir": "./",
-
-    /* Additional Checks */
-    "noUnusedLocals": true,                /* Report errors on unused locals. */
-    "noUnusedParameters": false,            /* Report errors on unused parameters. */
-    "noImplicitReturns": true              /* Report error when not all code paths in function return a value. */
+    "outDir": "../dist"
   },
   "include": [
-    "./**/*.ts"
+    "**/*.ts"
   ]
 }

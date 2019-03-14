@@ -1,6 +1,6 @@
-import {MiddlewareData, ResourceLoader} from "../../lib";
 import {expect} from "chai";
 import {ImageLoader} from "../fixtures/ImageLoader";
+import {MiddlewareData, ResourceLoader} from "../../src";
 
 describe("ResourceLoader", () => {
     let loader:ResourceLoader;
@@ -31,19 +31,11 @@ describe("ResourceLoader", () => {
         imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-736090.jpg");
         imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727278.png");
         imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-699858.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-708677.png");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-704146.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-682481.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-694540.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-700301.png");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-697696.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-722657.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-698246.jpg");
 
         let count = 0;
         loader.load().after((img: MiddlewareData<HTMLImageElement>) => {
             count++;
-            if(count === 12) {
+            if(count === 4) {
                 expect(img.data).to.not.eq(undefined, "img should have been loaded");
                 done();
             }
