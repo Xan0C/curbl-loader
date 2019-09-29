@@ -9,8 +9,7 @@
     "build": "tsc && npm run build-test",
     "build-test": "tsc -p ./test",
     "pretest": "npm run build",
-    "test": "karma start",
-    "prepublish": "npm run build"
+    "test": "karma start"
   },
   "repository": {
     "type": "git",
