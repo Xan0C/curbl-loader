@@ -15,10 +15,11 @@ describe("ResourceLoader", () => {
     });
 
     it("#Load Image", (done) => {
-        loader.get(ImageLoader).add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727341.jpg");
+        const key = 'https://images.unsplash.com/photo-1569697473232-76541af081fd?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2134&q=80';
+        loader.get(ImageLoader).add(key);
         loader.load().after((img: MiddlewareData<HTMLImageElement>) => {
            expect(img.data).to.not.eq(undefined, "img should have been loaded");
-           expect(img.key).to.eq("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727341.jpg", "img key should be url");
+           expect(img.key).to.eq(key, "img key should be url");
            expect((img.data as HTMLImageElement).crossOrigin, "anonymous");
            done();
         });
@@ -27,10 +28,10 @@ describe("ResourceLoader", () => {
     it("#Load multiple images async ", (done) => {
         const imageLoader = loader.get(ImageLoader);
 
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727341.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-736090.jpg");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-727278.png");
-        imageLoader.add("https://wallpapers.wallhaven.cc/wallpapers/full/wallhaven-699858.jpg");
+        imageLoader.add('https://images.unsplash.com/photo-1569697473232-76541af081fd?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2134&q=80');
+        imageLoader.add('https://images.unsplash.com/photo-1569671313489-5659dd977ff7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2134&q=80');
+        imageLoader.add('https://images.unsplash.com/photo-1569668443983-08cdc3bf8747?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=634&q=80');
+        imageLoader.add('https://images.unsplash.com/photo-1569669568849-39a2939a4b65?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=634&q=80');
 
         let count = 0;
         loader.load().after((img: MiddlewareData<HTMLImageElement>) => {
