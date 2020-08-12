@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/chai": "^4.1.7",
-    "@types/mocha": "^7.0.0",
+    "@types/mocha": "^8.0.2",
     "chai": "^4.2.0",
     "karma": "^4.0.1",
     "karma-chai": "^0.1.0",
