@@ -1,12 +1,9 @@
 version: 2.1
 
-orbs:
-  browser-tools: circleci/browser-tools@2.4.2
-
 defaults: &defaults
   working_directory: ~/repo
   docker:
-    - image: cimg/node:22.14.0
+    - image: cimg/node:22.14.0-browsers
 
 jobs:
   build_and_test:
@@ -23,10 +20,14 @@ jobs:
       - run:
           name: Build the package
           command: npm run build
-      - browser-tools/install-chrome
       - run:
           name: Run tests
-          command: npm test
+          # cimg/node + -browsers ships Chrome; CHROME_BIN default-Pfad explizit setzen
+          command: |
+            export CHROME_BIN="${CHROME_BIN:-/usr/bin/google-chrome}"
+            [[ -x "$CHROME_BIN" ]] || CHROME_BIN="$(command -v google-chrome || command -v chromium || true)"
+            echo "CHROME_BIN=$CHROME_BIN"
+            npm test
 
       - save_cache:
           paths:
