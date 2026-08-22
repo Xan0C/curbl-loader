@@ -20,21 +20,27 @@ jobs:
       - run:
           name: Build the package
           command: npm run build
-      # Deterministisch Chrome/Chromium im Container installieren (Karma braucht ein Browser-Binary).
+
+      # Karma braucht ein Browser-Binary. Ubuntu Jammy hat kein 'chromium'-Paket mehr,
+      # daher Google Chrome als offizieller .deb (ohne Orb-Abhaengigkeit, deterministisch).
       - run:
           name: Install Chrome for headless tests
           command: |
-            if command -v google-chrome >/dev/null 2>&1 || command -v chromium >/dev/null 2>&1; then
-              echo "chrome bereits vorhanden"
-            else
-              sudo apt-get update -qq
-              sudo apt-get install -y -qq chromium
+            if command -v google-chrome >/dev/null 2>&1; then
+              echo "chrome bereits vorhanden: $(command -v google-chrome)"
+              exit 0
             fi
-            echo "CHROME_BIN=$(command -v google-chrome || command -v chromium || echo /usr/bin/chromium)"
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq wget >/dev/null
+            cd /tmp
+            wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt-get install -y -qq /tmp/google-chrome-stable_current_amd64.deb
+            echo "CHROME_BIN=$(command -v google-chrome || echo /usr/bin/google-chrome)"
+
       - run:
           name: Run tests
           command: |
-            export CHROME_BIN="$(command -v google-chrome || command -v chromium || echo /usr/bin/chromium)"
+            export CHROME_BIN="$(command -v google-chrome || echo /usr/bin/google-chrome)"
             echo "CHROME_BIN=$CHROME_BIN"
             npm test
 
