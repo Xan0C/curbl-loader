@@ -1,4 +1,4 @@
-import * as EventEmitter from "eventemitter3";
+import EventEmitter from "eventemitter3";
 
 export class EmitSignal<EventFunction extends EventEmitter.ListenerFn = (...args:Array<any>) => void> {
     private _type:string | symbol;

@@ -2,7 +2,7 @@ import {Middleware, MiddlewareData} from "./Middleware";
 import {Resource} from "./Resource";
 import {AsyncWorkerQueue} from "./AsyncWorkerQueue";
 import {EmitSignal} from "./EmitSignal";
-import * as EventEmitter from "eventemitter3";
+import EventEmitter from "eventemitter3";
 
 export type ResourceConfig = {
     key?: string,

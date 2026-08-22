@@ -3,7 +3,7 @@ version: 2
 defaults: &defaults
   working_directory: ~/repo
   docker:
-    - image: circleci/node:8.9.1-browsers
+    - image: cimg/node:22.14.0-browsers
 
 jobs:
   build_and_test:
@@ -16,7 +16,7 @@ jobs:
             - v1-dependencies-{{ checksum "package.json" }}
             - v1-dependencies-
 
-      - run: npm install
+      - run: npm ci || npm install
       - run:
           name: Build the package
           command: npm run build

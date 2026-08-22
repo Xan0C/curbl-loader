@@ -1,6 +1,6 @@
 import {ResourceConfig, ResourceLoader} from "./ResourceLoader";
 import {Resource} from "./Resource";
-import * as EventEmitter from "eventemitter3";
+import EventEmitter from "eventemitter3";
 import {EmitSignal} from "./EmitSignal";
 
 export type MiddlewareData<T> = {
