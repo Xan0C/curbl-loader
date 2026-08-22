@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 defaults: &defaults
   working_directory: ~/repo
@@ -22,7 +22,20 @@ jobs:
           command: npm run build
       - run:
           name: Run tests
-          command: npm test
+          # cimg/node*-browsers ships Chrome at /usr/bin/google-chrome (or chromium)
+          command: |
+            if command -v google-chrome >/dev/null 2>&1; then
+              export CHROME_BIN="$(command -v google-chrome)"
+            elif command -v chromium >/dev/null 2>&1; then
+              export CHROME_BIN="$(command -v chromium)"
+            elif command -v chromium-browser >/dev/null 2>&1; then
+              export CHROME_BIN="$(command -v chromium-browser)"
+            else
+              echo "No Chrome/Chromium binary found in image"
+              find / -name 'chrome' -o -name 'chromium' 2>/dev/null | head; exit 1
+            fi
+            echo "CHROME_BIN=$CHROME_BIN"
+            npm test
 
       - save_cache:
           paths:
@@ -46,12 +59,10 @@ jobs:
           command: npm publish --access public
 
 workflows:
-  version: 2
-  # runs on every non tag push
+  version: 2.1
   build-and-test:
     jobs:
       - build_and_test
-  #run on version tags and not branches
   deploy:
     jobs:
       - build_and_test:
